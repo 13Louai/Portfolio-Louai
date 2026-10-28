@@ -30,6 +30,17 @@ Tout est dans [`js/data.js`](js/data.js). Un texte traduit s'écrit `{ fr: '…'
 Les fichiers à ajouter (photo, CV, captures d'écran des projets) vont dans un dossier `assets/` :
 `photo: 'assets/photo.jpg'`, `cv: 'assets/cv.pdf'`, `image: 'assets/reflo.png'`.
 
+## Pages projet
+
+Chaque projet qui a un bloc `etude` a sa propre page, `projet.html?p=<id>`, reliée depuis sa carte :
+problème, solution, architecture, choix techniques, défis relevés, chiffres, stack, ce que j'ai appris et la suite.
+Une partie laissée vide est masquée, et la numérotation suit. Une démo vidéo se met dans `video` (fichier `.mp4`) :
+elle remplace la couverture en haut de la page.
+
+`apprentissages` est vide pour l'instant : c'est la partie à écrire avec mes propres mots.
+
+## Couvertures
+
 Sans capture d'écran, Reflo et le bot bâtisseur ont une couverture dessinée en HTML (`couverture: 'reflo'` ou
 `'minecraft'`) ; un nouveau projet sans image affiche simplement son nom.
 

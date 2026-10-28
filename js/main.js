@@ -49,6 +49,31 @@
       copier: 'Copier l’adresse e-mail',
       copie: 'Adresse copiée !',
       droits: 'Tous droits réservés.',
+      etude: 'Lire l’étude de cas',
+      cs: {
+        retour: 'Tous les projets',
+        role: 'Rôle',
+        type: 'Type',
+        statut: 'Statut',
+        code: 'Code',
+        codePrive: 'Privé, démo sur demande',
+        codePublic: 'Public',
+        probleme: 'Le problème',
+        solution: 'La solution',
+        architecture: 'Architecture',
+        choix: 'Choix techniques',
+        defis: 'Défis relevés',
+        chiffres: 'En chiffres',
+        stack: 'Stack',
+        apprentissages: 'Ce que j’ai appris',
+        suite: 'La suite',
+        pourquoi: 'Pourquoi',
+        probLabel: 'Problème',
+        solLabel: 'Solution',
+        ctaTitre: 'Ce projet vous intéresse ?',
+        ctaTexte: 'Je peux vous le montrer en démo et détailler n’importe quelle partie du code.',
+        suivant: 'Projet suivant',
+      },
       reflo: {
         devis: 'DEVIS #041',
         montant: '1 240 €',
@@ -93,6 +118,31 @@
       copier: 'Copy email address',
       copie: 'Address copied!',
       droits: 'All rights reserved.',
+      etude: 'Read the case study',
+      cs: {
+        retour: 'All projects',
+        role: 'Role',
+        type: 'Type',
+        statut: 'Status',
+        code: 'Code',
+        codePrive: 'Private, demo on request',
+        codePublic: 'Public',
+        probleme: 'The problem',
+        solution: 'The solution',
+        architecture: 'Architecture',
+        choix: 'Technical choices',
+        defis: 'Challenges solved',
+        chiffres: 'By the numbers',
+        stack: 'Stack',
+        apprentissages: 'What I learned',
+        suite: 'What’s next',
+        pourquoi: 'Why',
+        probLabel: 'Problem',
+        solLabel: 'Solution',
+        ctaTitre: 'Interested in this project?',
+        ctaTexte: 'I can show you a live demo and walk you through any part of the code.',
+        suivant: 'Next project',
+      },
       reflo: {
         devis: 'QUOTE #041',
         montant: '€1,240',
@@ -140,6 +190,11 @@
   const mailto = (sujet) => `mailto:${P.email}?subject=${encodeURIComponent(sujet)}`;
   const initiales = P.nom.split(' ').map((m) => m[0]).join('');
   const [prenom, ...reste] = P.nom.split(' ');
+
+  // Deux pages partagent ce script : l'accueil (index.html) et la page d'un projet (projet.html?p=<id>).
+  const surProjet = document.body.dataset.page === 'projet';
+  const lienAccueil = (ancre) => (surProjet ? `index.html?lang=${langue}#${ancre}` : `#${ancre}`);
+  const lienProjet = (id) => `projet.html?p=${encodeURIComponent(id)}&lang=${langue}`;
 
   let timers = [];
   const plus_tard = (fn, ms) => timers.push(setTimeout(fn, ms));
@@ -298,10 +353,10 @@
       return s ? `<span class="state${/fonctionnel|working|termin|done|en ligne|live/i.test(s) ? ' is-ok' : ''}">${esc(s)}</span>` : '';
     };
     const actions = (p) =>
-      p.liens.length
+      (p.etude ? `<a class="btn btn-ink" href="${lienProjet(p.id)}">${esc(u.etude)}${svg('arrow')}</a>` : '') +
+      (p.liens.length
         ? p.liens.map((l) => `<a class="btn" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(t(l.label) || u.voirProjet)}${svg('ext')}</a>`).join('')
-        : `<span class="private">${svg('lock')}${esc(u.prive)}</span>
-           <a class="btn btn-dashed" href="${mailto(u.sujetDemo(t(p.nom)))}">${esc(u.demo)}${svg('arrow')}</a>`;
+        : `<span class="private">${svg('lock')}${esc(u.prive)}</span>`);
     return `<section class="sec" id="projets" aria-labelledby="projets-t">
       <div class="wrap">
         ${tete(u.projets, 'projets')}
@@ -314,7 +369,7 @@
               </div>
               <div class="project-body">
                 <div class="project-top">
-                  <h3 id="p-${p.id}">${esc(t(p.nom))}</h3>
+                  <h3 id="p-${p.id}">${p.etude ? `<a href="${lienProjet(p.id)}">${esc(t(p.nom))}</a>` : esc(t(p.nom))}</h3>
                   ${statut(p)}
                 </div>
                 <p class="resume">${esc(t(p.resume))}</p>
@@ -364,6 +419,129 @@
     </section>`;
   }
 
+  // --- Page d'un projet --------------------------------------------------------------------------------
+
+  const ICONE_OUTIL = Object.fromEntries(D.competences.flatMap((g) => g.outils.map((o) => [o.nom, o.icone])));
+  const puce = (nom) => {
+    const icone = ICONE_OUTIL[nom];
+    return `<li class="chip">${
+      icone
+        ? `<img src="${ICONES_CDN}${encodeURIComponent(icone)}.svg" alt="" width="16" height="16" loading="lazy">`
+        : `<span class="chip-letter" aria-hidden="true">${esc(nom[0])}</span>`
+    }${esc(nom)}</li>`;
+  };
+
+  function pageProjet(p) {
+    const u = ui();
+    const c = u.cs;
+    const e = p.etude || {};
+    const i = D.projets.indexOf(p);
+    const suivant = D.projets.length > 1 ? D.projets[(i + 1) % D.projets.length] : null;
+    const liste = (v) => t(v) || [];
+
+    // Les parties vides sont masquées, et la numérotation suit les parties affichées.
+    let n = 0;
+    const partie = (titre, contenu) =>
+      contenu
+        ? `<section class="cs-sec reveal">
+            <h2 class="cs-h"><span class="tag tag-dark">${String(++n).padStart(2, '0')}</span>${esc(titre)}</h2>
+            ${contenu}
+          </section>`
+        : '';
+
+    const media = p.video
+      ? `<video src="${esc(p.video)}" controls muted playsinline preload="metadata"></video>`
+      : `<div class="cover cover-lg">${couverture(p)}</div>`;
+
+    const statut = t(p.statut);
+    const meta = [
+      [c.role, t(e.role)],
+      [c.type, t(e.type)],
+      [c.statut, statut],
+      [c.code, p.liens.length ? c.codePublic : c.codePrive],
+    ].filter(([, v]) => v);
+
+    const actions = p.liens.length
+      ? p.liens.map((l) => `<a class="btn" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(t(l.label) || u.voirProjet)}${svg('ext')}</a>`).join('')
+      : `<a class="btn" href="${mailto(u.sujetDemo(t(p.nom)))}">${esc(u.demo)}${svg('arrow')}</a>`;
+
+    return `<div class="wrap projet-page">
+      <a class="back" href="${lienAccueil('projets')}">← ${esc(c.retour)}</a>
+
+      <header class="window box reveal">
+        <div class="win-bar" aria-hidden="true">
+          <span class="win-dots"><i></i><i></i><i></i></span>
+          <span class="win-title">PROJETS / ${esc(p.id.toUpperCase())}.MD</span>
+          <span class="win-tag">${langue.toUpperCase()}</span>
+        </div>
+        <div class="win-body">
+          <span class="tag">${esc(t(p.resume))}</span>
+          <h1 class="name">${esc(t(p.nom))}<span class="dot">.</span></h1>
+          <dl class="cs-meta">${meta.map(([k, v]) => `<div class="box-sm"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+          <div class="actions">${actions}</div>
+        </div>
+      </header>
+
+      <figure class="box cs-media reveal">${media}</figure>
+
+      ${partie(c.probleme, e.probleme && `<p class="cs-lead">${enrichi(t(e.probleme))}</p>`)}
+      ${partie(c.solution, e.solution && `<p class="cs-lead">${enrichi(t(e.solution))}</p>`)}
+      ${partie(
+        c.architecture,
+        (e.architecture || []).length &&
+          `<ol class="flow">${e.architecture
+            .map((s, k) => `<li class="box-sm"><span class="flow-n">${String(k + 1).padStart(2, '0')}</span><h3>${esc(t(s.titre))}</h3><p>${enrichi(t(s.texte))}</p></li>`)
+            .join('')}</ol>`
+      )}
+      ${partie(
+        c.choix,
+        (e.choix || []).length &&
+          `<div class="cs-grid">${e.choix
+            .map((x) => `<article class="box cs-card"><span class="tag">${esc(c.pourquoi)}</span><h3>${esc(t(x.titre))}</h3><p>${enrichi(t(x.texte))}</p></article>`)
+            .join('')}</div>`
+      )}
+      ${partie(
+        c.defis,
+        (e.defis || []).length &&
+          `<div class="cs-defis">${e.defis
+            .map(
+              (x) => `<article class="box cs-defi">
+                <h3>${esc(t(x.titre))}</h3>
+                <div class="cs-ps">
+                  <div><p class="cs-label">${esc(c.probLabel)}</p><p>${enrichi(t(x.probleme))}</p></div>
+                  <div><p class="cs-label cs-ok">${esc(c.solLabel)}</p><p>${enrichi(t(x.solution))}</p></div>
+                </div>
+              </article>`
+            )
+            .join('')}</div>`
+      )}
+      ${partie(
+        c.chiffres,
+        (e.chiffres || []).length &&
+          `<ul class="facts cs-facts">${e.chiffres.map((x) => `<li class="box-sm"><b>${esc(x.valeur)}</b><span>${esc(t(x.label))}</span></li>`).join('')}</ul>`
+      )}
+      ${partie(c.stack, `<ul class="chips">${p.stack.map(puce).join('')}</ul>`)}
+      ${partie(c.apprentissages, liste(e.apprentissages).length && `<ul class="points">${liste(e.apprentissages).map((x) => `<li>${enrichi(x)}</li>`).join('')}</ul>`)}
+      ${partie(c.suite, liste(e.suite).length && `<ul class="points">${liste(e.suite).map((x) => `<li>${enrichi(x)}</li>`).join('')}</ul>`)}
+
+      <aside class="box cs-cta reveal">
+        <div>
+          <h2>${esc(c.ctaTitre)}</h2>
+          <p>${esc(c.ctaTexte)}</p>
+        </div>
+        <div class="actions">
+          ${actions}
+          <a class="btn btn-dashed" href="${lienAccueil('contact')}">${esc(u.nav.contact)}</a>
+        </div>
+      </aside>
+
+      ${suivant && suivant !== p ? `<a class="box cs-next reveal" href="${lienProjet(suivant.id)}">
+        <span class="cs-label">${esc(c.suivant)}</span>
+        <span class="cs-next-name">${esc(t(suivant.nom))} ${svg('arrow')}</span>
+      </a>` : ''}
+    </div>`;
+  }
+
   // --- Rendu complet -----------------------------------------------------------------------------------
 
   const SECTIONS = ['accueil', 'apropos', 'parcours', 'competences', 'projets', 'contact'];
@@ -376,23 +554,35 @@
     observateurs = [];
 
     root.lang = langue;
-    document.title = u.titrePage;
-    $('#skip').textContent = u.skip;
+    $('#skip').textContent = surProjet ? u.cs.retour : u.skip;
 
+    $('.logo').href = lienAccueil('accueil');
     $('#menu').setAttribute('aria-label', u.menu);
     $('#menu').innerHTML = SECTIONS.filter((id) => id !== 'parcours' || D.parcours.length)
-      .map((id) => `<a href="#${id}">${esc(u.nav[id])}</a>`)
+      .map((id) => `<a href="${lienAccueil(id)}"${surProjet && id === 'projets' ? ' class="is-active"' : ''}>${esc(u.nav[id])}</a>`)
       .join('');
     $('#burger').setAttribute('aria-label', u.menu);
     $('#lang-btn').setAttribute('aria-label', u.langue);
     majBoutonTheme();
 
-    $('#app').innerHTML =
-      sectionAccueil() + sectionAPropos() + sectionParcours() + sectionCompetences() + sectionProjets() + sectionContact();
+    if (surProjet) {
+      const id = new URLSearchParams(location.search).get('p');
+      const projet = D.projets.find((p) => p.id === id);
+      if (!projet) {
+        location.replace(lienAccueil('projets'));
+        return;
+      }
+      document.title = `${t(projet.nom)} — ${P.nom}`;
+      $('#app').innerHTML = pageProjet(projet);
+    } else {
+      document.title = u.titrePage;
+      $('#app').innerHTML =
+        sectionAccueil() + sectionAPropos() + sectionParcours() + sectionCompetences() + sectionProjets() + sectionContact();
+    }
     $('#foot').innerHTML = `© ${new Date().getFullYear()} ${esc(P.nom)}. ${esc(u.droits)}`;
 
     machineAEcrire();
-    suivreSections();
+    if (!surProjet) suivreSections();
     apparitions();
   }
 
