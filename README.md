@@ -3,10 +3,6 @@
 Mon portfolio, en français et en anglais, dans un style « néo-brutaliste » : papier crème à pointillés, bordures
 épaisses, ombres décalées, une fenêtre de terminal en guise d'accueil.
 
-Sections : accueil, à propos, parcours (dès qu'il est rempli), compétences, projets clés, contact.
-Thème clair et sombre, menu adapté au téléphone, animations coupées si le système le demande.
-
-Aucun framework, aucune étape de build : du HTML, du CSS et du JavaScript.
 
 ## Lancer en local
 
